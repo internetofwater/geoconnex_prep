@@ -1,0 +1,1 @@
+This folder is to hold output that will not be checked in.
