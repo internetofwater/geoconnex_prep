@@ -5,3 +5,4 @@
 data/*
 .drake
 *.csv
+*.DS_Store
