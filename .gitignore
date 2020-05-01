@@ -5,4 +5,5 @@
 data/*
 .drake
 *.csv
+*.geojson
 *.DS_Store

@@ -6,3 +6,7 @@ get_nwis_sites <- function() {
                       x))
   }))
 }
+
+get_wbd_gdb <- function(wbd_dir) {
+  nhdplusTools::download_wbd(outdir = wbd_dir)
+}
