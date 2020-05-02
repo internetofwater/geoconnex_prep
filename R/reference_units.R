@@ -24,3 +24,33 @@ get_hu02 <- function(wbd_gdb, hu02_layer, gnis_base, pid_base,
   
   readr::write_csv(out, path = csv_out)
 }
+
+write_nat_aq <- function(nat_aq, pid_base, landing_base, out_geojson, out_csv) {
+  nat_aq <- rmapshaper::ms_simplify(nat_aq)
+  
+  nat_aq$LINK[nat_aq$AQ_CODE == 610] <- "https://water.usgs.gov/ogw/aquiferbasics/pacnorbr.html"
+  nat_aq$NAT_AQFR_CD[nat_aq$AQ_CODE == 610] <- "N100PCFNWV"
+  
+  nat_aq <- dplyr::group_by(nat_aq, NAT_AQFR_CD) %>%
+    dplyr::summarize(ROCK_NAME = ROCK_NAME[1], ROCK_TYPE = ROCK_TYPE[1], AQ_NAME = AQ_NAME[1],
+              AQ_CODE = AQ_CODE[1], LINK = LINK[1])
+  
+  nat_aq$uri <- paste0(pid_base, nat_aq$NAT_AQFR_CD)
+  
+  nat_aq <- dplyr::filter(nat_aq, !is.na(nat_aq$NAT_AQFR_CD)) %>%
+    select(uri, LINK, NAT_AQFR_CD, AQ_NAME, AQ_CODE, ROCK_NAME, ROCK_TYPE)
+  
+  unlink(out_geojson, force = TRUE)
+  
+  sf::write_sf(nat_aq, out_geojson)
+  
+  nat_aq$uri <- paste0(pid_base, nat_aq$NAT_AQFR_CD)
+  
+  out <- dplyr::tibble(id = nat_aq$uri,
+                       target = paste0(landing_base,
+                                       nat_aq$NAT_AQFR_CD),
+                       creator = "dblodgett@usgs.gov",
+                       description = "National Aquifer Reference")
+  
+  readr::write_csv(out, path = out_csv)
+}
