@@ -25,6 +25,8 @@ plan <- drake_plan(nwis_sites = get_nwis_sites(),
                                              pid_base = "https://geoconnex.us/ref/nat_aq/",
                                              landing_base = "https://info.geoconnex.us/collections/nat_aq/items/",
                                              out_geojson = file_out("out/nat_aq.geojson"),
-                                             out_csv = file_out("out/nat_aq.csv")))
+                                             out_csv = file_out("out/nat_aq.csv")),
+                   wade_sites = sf::read_sf("https://www.hydroshare.org/resource/5f665b7b82d74476930712f7e423a0d2/data/contents/wade_sites.geojson"),
+                   wade_nldi = make_wade_nldi(wade_sites, file_out("out/wade.geojson")))
 
 make(plan)
