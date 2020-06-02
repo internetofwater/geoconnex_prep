@@ -1,26 +1,27 @@
-get_hu02 <- function(wbd_gdb, hu02_layer, gnis_base, pid_base, 
-                     out_geojson, landing_base, csv_out) {
+get_hu <- function(wbd_gdb, hu_layer, id_attribute, gnis_base, pid_base, 
+                   out_geojson, landing_base, csv_out, description, creator = "dblodgett@usgs.gov") {
+  hu <- sf::read_sf(wbd_gdb, hu_layer)
   
-  hu02 <- sf::read_sf(wbd_gdb, hu02_layer)
+  hu <- rmapshaper::ms_simplify(hu, sys = TRUE)
   
-  hu02 <- rmapshaper::ms_simplify(hu02)
+  hu$gnis_url <- paste0(gnis_base,
+                          hu$GNIS_ID)
   
-  hu02$gnis_url <- paste0(gnis_base,
-                          hu02$GNIS_ID)
+  names(hu)[names(hu) == id_attribute] <- "temp_id"
   
-  hu02$uri <- paste0(pid_base, hu02$HUC2)
+  hu$uri <- paste0(pid_base, hu$temp_id)
   
-  hu02 <- dplyr::select(hu02, uri, NAME, gnis_url, GNIS_ID, HUC2, LOADDATE)
+  hu <- dplyr::select(hu, uri, NAME, gnis_url, GNIS_ID, temp_id, LOADDATE)
   
   unlink(out_geojson, force = TRUE)
   
-  sf::write_sf(hu02, out_geojson)
+  sf::write_sf(hu, out_geojson)
   
-  out <- dplyr::tibble(id = hu02$uri,
-                        target = paste0(landing_base,
-                                        hu02$HUC2),
-                        creator = "dblodgett@usgs.gov",
-                        description = "two digit hydrologic units reference")
+  out <- dplyr::tibble(id = hu$uri,
+                       target = paste0(landing_base,
+                                       hu$temp_id),
+                       creator = creator,
+                       description = description)
   
   readr::write_csv(out, path = csv_out)
 }
