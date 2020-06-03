@@ -4,8 +4,12 @@ get_hu <- function(wbd_gdb, hu_layer, id_attribute, gnis_base, pid_base,
   
   hu <- rmapshaper::ms_simplify(hu, sys = TRUE)
   
-  hu$gnis_url <- paste0(gnis_base,
-                          hu$GNIS_ID)
+  if(!is.na(hu$GNIS_ID)) {
+    hu$gnis_url <- paste0(gnis_base,
+                            hu$GNIS_ID)
+  } else {
+    hu$gnis_url <- ""
+  }
   
   names(hu)[names(hu) == id_attribute] <- "temp_id"
   
