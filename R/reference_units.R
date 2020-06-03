@@ -19,14 +19,21 @@ get_hu <- function(wbd_gdb, hu_layer, id_attribute, gnis_base, pid_base,
   
   unlink(out_geojson, force = TRUE)
   
-  sf::write_sf(hu, out_geojson)
-  
   out <- dplyr::tibble(id = hu$uri,
                        target = paste0(landing_base,
                                        hu$temp_id),
                        creator = creator,
-                       description = description)
+                       description = description,
+                       c1_type = "QueryString",
+                       c1_match = "f?=.*",
+                       c1_value = paste0(landing_base,
+                                         hu$temp_id,
+                                         "?f=${C:f:1}"))
+
+  names(hu)[names(hu) == "temp_id"] <- id_attribute
   
+  sf::write_sf(hu, out_geojson)
+    
   readr::write_csv(out, path = csv_out)
 }
 
@@ -55,7 +62,12 @@ write_nat_aq <- function(nat_aq, pid_base, landing_base, out_geojson, out_csv) {
                        target = paste0(landing_base,
                                        nat_aq$NAT_AQFR_CD),
                        creator = "dblodgett@usgs.gov",
-                       description = "National Aquifer Reference")
+                       description = "National Aquifer Reference",
+                       c1_type = "QueryString",
+                       c1_match = "f?=.*",
+                       c1_value = paste0(landing_base,
+                                         nat_aq$NAT_AQFR_CD,
+                                         "?f=${C:f:1}"))
   
   readr::write_csv(out, path = out_csv)
 }
