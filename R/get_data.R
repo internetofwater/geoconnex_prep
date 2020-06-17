@@ -8,5 +8,5 @@ get_nwis_sites <- function() {
 }
 
 get_wbd_gdb <- function(wbd_dir) {
-  nhdplusTools::download_wbd(outdir = wbd_dir)
+  nhdplusTools::download_wbd(outdir = wbd_dir, url = "https://prd-tnm.s3.amazonaws.com/StagedProducts/Hydrography/WBD/National/GDB/WBD_National_GDB.zip")
 }
