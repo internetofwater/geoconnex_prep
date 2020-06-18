@@ -36,7 +36,7 @@ get_hu <- function(wbd_gdb, hu_layer, id_attribute, gnis_base, pid_base,
                        creator = creator,
                        description = description,
                        c1_type = "QueryString",
-                       c1_match = "?f=.*",
+                       c1_match = "f=.*",
                        c1_value = paste0(landing_base,
                                          hu$temp_id,
                                          "?f=${C:f:1}"))
@@ -77,7 +77,7 @@ write_nat_aq <- function(nat_aq, pid_base, landing_base, out, out_csv) {
                        creator = "dblodgett@usgs.gov",
                        description = "National Aquifer Reference",
                        c1_type = "QueryString",
-                       c1_match = "?f=.*",
+                       c1_match = "f=.*",
                        c1_value = paste0(landing_base,
                                          nat_aq$NAT_AQFR_CD,
                                          "?f=${C:f:1}"))
