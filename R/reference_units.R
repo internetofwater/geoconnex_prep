@@ -1,21 +1,16 @@
-get_hu <- function(wbd_gdb, hu_layer, id_attribute, gnis_base, pid_base, 
-                   out, landing_base, csv_out, description, creator = "dblodgett@usgs.gov") {
+get_hu <- function(wbd_gdb, hu_layer, id_attribute, pid_base, 
+                   out, landing_base, csv_out, description, 
+                   creator = "dblodgett@usgs.gov") {
+  
   hu <- sf::read_sf(wbd_gdb, hu_layer)
   
-  hu <- rmapshaper::ms_simplify(hu, sys = TRUE)
-  
-  if(!is.na(hu$GNIS_ID)) {
-    hu$gnis_url <- paste0(gnis_base,
-                            hu$GNIS_ID)
-  } else {
-    hu$gnis_url <- ""
-  }
+  hu <- rmapshaper::ms_simplify(hu)
   
   names(hu)[names(hu) == id_attribute] <- "temp_id"
   
   hu$uri <- paste0(pid_base, hu$temp_id)
   
-  hu <- dplyr::select(hu, uri, NAME, gnis_url, GNIS_ID, temp_id, LOADDATE)
+  hu <- dplyr::select(hu, uri, NAME, temp_id, LOADDATE)
   
   hu_level <- nchar(hu$temp_id[1])
   
