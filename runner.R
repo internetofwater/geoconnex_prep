@@ -15,6 +15,8 @@ plan <- drake_plan(nwis_sites = get_nwis_sites(),
                    nhdplusv2_flines = get_v2_flowlines(),
                    nhdplus2_attributes = sf::st_drop_geometry(nhdplusv2_flines),
                    gf11_pois = index_pois(POIs, v1_v2, flines = nhdplusv2_flines),
+                   ms_gpkg = get_mainstems_db(),
+                   gnis_f = download_gnis(),
                    huc = target(
                      make_nwis_huc_redirects(nwis_sites,
                                              file_out("out/hydrologic-unit.csv"))),
@@ -72,6 +74,8 @@ plan <- drake_plan(nwis_sites = get_nwis_sites(),
                                              out = file_out("out/nat_aq.gpkg"),
                                              out_csv = file_out("out/nat_aq.csv")),
                    wade_sites = sf::read_sf("https://www.hydroshare.org/resource/5f665b7b82d74476930712f7e423a0d2/data/contents/wade_sites.geojson"),
-                   wade_nldi = make_wade_nldi(wade_sites, file_out("out/wade.geojson")))
+                   wade_nldi = make_wade_nldi(wade_sites, file_out("out/wade.geojson")),
+                   mainstems = make_mainstems(ms_gpkg, file_out("out/mainstems.gpkg")),
+                   gnis = get_gnis(gnis_f, file_out("out/gnis.gpkg")))
 
 make(plan)
