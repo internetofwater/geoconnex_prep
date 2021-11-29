@@ -2,15 +2,17 @@ get_hu <- function(wbd_gdb, hu_layer, id_attribute, pid_base,
                    out, landing_base, csv_out, description, 
                    creator = "dblodgett@usgs.gov") {
   
+  if(!file.exists(csv_out)) {
+  
   hu <- sf::read_sf(wbd_gdb, hu_layer)
   
-  hu <- rmapshaper::ms_simplify(hu)
+  hu <- rmapshaper::ms_simplify(hu, sys = TRUE)
   
   names(hu)[names(hu) == id_attribute] <- "temp_id"
   
   hu$uri <- paste0(pid_base, hu$temp_id)
   
-  hu <- dplyr::select(hu, uri, NAME, temp_id, LOADDATE)
+  hu <- dplyr::select(hu, uri, name, temp_id, loaddate)
   
   hu_level <- nchar(hu$temp_id[1])
   
@@ -41,6 +43,10 @@ get_hu <- function(wbd_gdb, hu_layer, id_attribute, pid_base,
   sf::write_sf(hu, out)
     
   readr::write_csv(out_pid, path = csv_out)
+  
+  } else {
+    hu <- sf::read_sf(out)
+  }
   
   hu
 }

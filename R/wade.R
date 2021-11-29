@@ -1,4 +1,6 @@
 make_wade_nldi <- function(wade_sites, out_geojson) {
+  if(!file.exists(out_geojson)) {
+  
   wade_sites <- wade_sites %>%
     mutate(feature_name = paste("State:", StateID, 
                                 "Source:", DataSourceOrganizationID,
@@ -6,6 +8,8 @@ make_wade_nldi <- function(wade_sites, out_geojson) {
     select(feature_id = id, feaure_name = feature_name, feature_uri = uri)
   
   sf::write_sf(wade_sites, out_geojson)
+  
+  } 
   
   wade_sites
 }
