@@ -32,6 +32,8 @@ make_mainstems <- function(ms_gpkg, out_f) {
            head_latestHUC12, outlet_latestHUC12) %>%
     mutate(id = as.character(id))
     
+  ms_out <- sf::st_transform(ms_out, 4326)
+  
   sf::write_sf(ms_out, out_f)
   
   ms_out
