@@ -7,12 +7,13 @@ library(drake)
 
 sf::sf_use_s2(FALSE)
 
-Sys.setenv("Path" = paste0("C:\\Users\\dblodgett\\AppData\\Roaming\\npm\\;", Sys.getenv("Path")))
+if(!"mapshaper-xl" %in% names(check_sys_mapshaper())) stop("rmapshaper xml must be available")
 
 sourced <- sapply(list.files("R", pattern = "*.R", full.names = TRUE), source)
 
 plan <- drake_plan(nwis_sites = get_nwis_sites(),
-                   nwis_wells = get_nwis_wells(nwis_sites),
+                   nwis_well_sites = get_nwis_well_sites(nwis_sites),
+                   nwis_wells = get_nwis_wells(nwis_well_sites),
                    nwis_wells_out = sf::write_sf(nwis_wells, "out/nwis_wells.geojson"),
                    POIs = get_gf_11_poi(),
                    v1_v2 = get_nhdplus_crosswalk(),
@@ -71,6 +72,12 @@ plan <- drake_plan(nwis_sites = get_nwis_sites(),
                                  description = "ten digit hydrologic units reference",
                                  creator = "dblodgett@usgs.gov"),
                    ngwmn_wfs_call = "https://cida.usgs.gov/ngwmn/geoserver/wfs?service=WFS&version=1.0.0&request=GetFeature&typeName=ngwmn:aquifrp025&outputFormat=application%2Fjson",
+                   nwis_aq_names = as.data.frame(
+                     rvest::html_table(rvest::read_html(
+                       "https://help.waterdata.usgs.gov/aqfr_cd"))[[1]]),
+                   nwis_aq = make_nwis_aq(nwis_well_sites, nwis_aq_names,
+                                          area_filter = units::set_units(1e12, "m^2"),
+                                          min_wells = 100),
                    nat_aq = sf::read_sf(ngwmn_wfs_call),
                    nat_aq_out = write_nat_aq(nat_aq,
                                              pid_base = "https://geoconnex.us/ref/nat_aq/",

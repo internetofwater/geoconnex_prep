@@ -13,14 +13,18 @@ get_nwis_sites <- function() {
   sites
 }
 
-get_nwis_wells <- function(sites) {
-  
-  gw_site <- filter(sites, grepl("^GW.*|^sb.*", site_tp_cd) & 
+get_nwis_well_sites <- function(sites) {
+  filter(sites, grepl("^GW.*|^sb.*", site_tp_cd) & 
                       !is.na(dec_long_va) & 
                       !is.na(dec_lat_va)) %>%
     select(dec_lat_va, dec_long_va, site_no, station_nm, site_no, 
-           nat_aqfr_cd, aqfr_cd, aqfr_type_cd, 
-           well_depth_va, hole_depth_va, alt_va, alt_datum_cd) %>%
+           nat_aqfr_cd, aqfr_cd, aqfr_type_cd, state_cd,
+           well_depth_va, hole_depth_va, alt_va, alt_datum_cd)
+}
+
+get_nwis_wells <- function(gw_site) {
+  
+  gw_site %>%  
     group_by(site_no) %>% 
     arrange(nat_aqfr_cd) %>% # Ensures we select ones that have a national aquifer code
     filter(n() == 1) %>% 
@@ -43,22 +47,26 @@ get_nwis_wells <- function(sites) {
   
 }
 
+
+
 get_wbd_gdb <- function(wbd_dir) {
   nhdplusTools::download_wbd(outdir = wbd_dir, url = "https://prd-tnm.s3.amazonaws.com/StagedProducts/Hydrography/WBD/National/GDB/WBD_National_GDB.zip")
 }
 
 get_gf_11_poi <- function() {
-  temp_gdb <- file.path(tempdir(), "GFv1.1.gdb.zip")
+  temp_gdb <- file.path(tempdir(check = TRUE), "GFv1.1.gdb.zip")
   
   sbtools::item_file_download("5e29d1a0e4b0a79317cf7f63", 
                               names = "GFv1.1.gdb.zip", 
-                              destinations = temp_gdb)
+                              destinations = temp_gdb, 
+                              overwrite_file = TRUE)
   
   zip::unzip(temp_gdb, exdir = tempdir())
   
   temp_gdb <- gsub(".zip", "", temp_gdb)
   
-  list(POIs = sf::read_sf(temp_gdb, "POIs_v1_1"), TBto = sf::read_sf(temp_gdb, "TBtoGFv1_POIs"))
+  list(POIs = sf::read_sf(temp_gdb, "POIs_v1_1"), 
+       TBto = sf::read_sf(temp_gdb, "TBtoGFv1_POIs"))
 }
 
 get_nhdplus_crosswalk <- function() {

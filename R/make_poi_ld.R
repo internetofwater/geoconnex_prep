@@ -14,8 +14,8 @@ index_pois <- function(POIs, v1_v2, flines) {
   NA_POIs <- filter(POIs, is.na(XWalkType))
   
   NA_POI_index <- nhdplusTools::get_flowline_index(flines, 
-                                                   sf::st_zm(NA_POIs), 
-                                                   search_radius = 0.1)
+                                                   sf::st_transform(sf::st_zm(NA_POIs), 5070), 
+                                                   search_radius = units::set_units(500, "m"))
   
   NA_POIs$id <- seq_len(nrow(NA_POIs))
   
@@ -27,8 +27,8 @@ index_pois <- function(POIs, v1_v2, flines) {
   
   not_1_1_POIs_index <- nhdplusTools::get_flowline_index(
     filter(flines, COMID %in% not_1_1_POIs$V2_ComID),
-    not_1_1_POIs, 
-    search_radius = 0.1
+    sf::st_transform(not_1_1_POIs, 5070),
+    search_radius = units::set_units(5000, "m")
   )
   
   not_1_1_POIs <- bind_cols(not_1_1_POIs, select(not_1_1_POIs_index, -id))
@@ -39,8 +39,8 @@ index_pois <- function(POIs, v1_v2, flines) {
   
   mapped_POIs_index <- nhdplusTools::get_flowline_index(
     filter(flines, COMID %in% mapped_POIs$V2_ComID),
-    mapped_POIs, 
-    search_radius = 0.1
+    sf::st_transform(mapped_POIs, 5070),
+    search_radius = units::set_units(10000, "m")
   )
   
   mapped_POIs <- bind_cols(mapped_POIs, select(mapped_POIs_index, -id))

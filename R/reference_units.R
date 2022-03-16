@@ -85,3 +85,83 @@ write_nat_aq <- function(nat_aq, pid_base, landing_base, out, out_csv) {
   
   readr::write_csv(out, path = out_csv)
 }
+
+make_nwis_aq <- function(nwis_well_sites, aq_names, 
+                         area_filter = units::set_units(1e12, "m^2"),
+                         min_wells = 100) {
+  
+  old_s2 <- sf_use_s2()
+  sf::sf_use_s2(TRUE)
+  
+  # Get the well sites ready to union.
+  nwis_well_sites <- nwis_well_sites %>%
+    # must have aquifer code
+    filter(!is.null(aqfr_cd) & !is.na(aqfr_cd)) %>%
+    # need numeric or NA well depth
+    mutate(well_depth_va = ifelse(well_depth_va == ".", NA, well_depth_va)) %>%
+    mutate(well_depth_va = as.numeric(well_depth_va)) %>%
+    # Don't want some attributes
+    # Note we may bring national aquifer code back deliberately later.
+    select(-station_nm, -nat_aqfr_cd, -state_cd, -aqfr_type_cd, 
+           -hole_depth_va, -alt_va, -alt_datum_cd) %>%
+    distinct() %>%
+    # convert to a sf table
+    st_as_sf(coords = c("dec_long_va", "dec_lat_va"), crs = 4326)
+
+  aq_geom <- nwis_well_sites %>%
+    # summarize into a multipoint dataset per aqfr_cd
+    group_by(aqfr_cd) %>%
+    summarise(wells_in_aq = n(),
+              min_well_depth = min(well_depth_va, na.rm = TRUE),
+              max_well_depth = max(well_depth_va, na.rm = TRUE),
+              do_union = FALSE)
+  
+  make_hull <- function(x, geom) {
+    # if we got a point
+    if(length(geom[[x]]) == 2) 
+      return(st_buffer(geom[x], units::set_units(100, "m"))[[1]])
+    
+    # we have something to work with
+    geom <- st_convex_hull(geom[x])
+    
+    # If it's not a polygon
+    if(st_geometry_type(geom) != "POLYGON")
+      return(st_buffer(geom, units::set_units(100, "m"))[[1]])
+      
+    geom[[1]]
+  }
+  
+  
+  aq <- lapply(1:nrow(aq_geom), make_hull, 
+               geom = sf::st_geometry(aq_geom)) %>%
+    st_sfc(crs = st_crs(aq_geom)) %>%
+    st_cast("POLYGON")
+  
+  aq_out <- st_sf(st_drop_geometry(aq_geom), 
+                  geom = aq)
+
+  aq_out <- aq_out[aq_out$wells_in_aq > min_wells, ] %>%
+    sf::st_make_valid() %>%
+    mutate(area = st_area(.))
+
+  good_names <- aq_names %>%
+    # avoid aquifers that aren't actually aquifers
+    filter(!grepl("rocks$|erathem$|system$|systems$", 
+                  .data$`Local Aquifer Name`, 
+                  ignore.case = TRUE) & 
+             .data$`Local Aquifer Code` %in% aq_out$aqfr_cd) %>%
+    select(-`State Code`, 
+           aqfr_nm = `Local Aquifer Name`, 
+           aqfr_cd = `Local Aquifer Code`) %>%
+    distinct() %>%
+    # There are some duplicate names on these codes.
+    group_by(aqfr_cd) %>%
+    filter(row_number() == 1)
+  
+  sf_use_s2(old_s2)
+  
+  # join to the keepers and filter out massive ones.
+  right_join(aq_out, good_names) %>%
+    filter(area < area_filter)
+  
+}
