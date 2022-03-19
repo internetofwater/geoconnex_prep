@@ -111,11 +111,38 @@ download_gnis <- function() {
   
   if(!file.exists(gnis_zip)) {
     dir.create(dirname(gnis_zip), recursive = TRUE, showWarnings = FALSE)
-    f <- download.file("https://geonames.usgs.gov/docs/stategaz/NationalFile.zip", gnis_zip)
+    f <- download.file("https://geonames.usgs.gov/docs/stategaz/NationalFile.zip", gnis_zip, mode = "wb")
     
     zip::unzip(gnis_zip, exdir = dirname(gnis_zip))
   }
   
   "data/gnis/NationalFile_20210825.txt"
   
+}
+
+get_principle_aquifers <- function() {
+  aq_zip <- "data/g_aquifr.tar.gz"
+  
+  if(!file.exists(aq_zip)) {
+    download.file("https://water.usgs.gov/GIS/dsdl/aquifers_us.zip", 
+                  aq_zip, mode = "wb")
+    zip::unzip(aq_zip, exdir = dirname(aq_zip))
+    
+  }
+  "data/us_aquifers.shp"
+  
+}
+
+get_secondary_gydrogeologic_regions <- function() {
+  shr_zip <- "data/SHRs_Conterminous_US_Geodatabase.zip"
+  
+  if(!file.exists(shr_zip)) {
+
+    f <- sbtools::item_file_download("5a5643b6e4b01e7be24449fc", 
+                                     names = basename(shr_zip), 
+                                     destinations = shr_zip)
+    zip::unzip(shr_zip, exdir = dirname(shr_zip))
+  }
+  
+  "data/Secondary_Hydrogeologic_Regions.gdb"
 }
