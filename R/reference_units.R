@@ -86,6 +86,66 @@ write_nat_aq <- function(nat_aq, pid_base, landing_base, out, out_csv) {
   readr::write_csv(out, path = out_csv)
 }
 
+write_pa <- function(pa, pid_base, landing_base, out, out_csv) {
+  pa <- rmapshaper::ms_simplify(pa)
+  
+  pa <- dplyr::group_by(pa, AQ_CODE) %>%
+    dplyr::summarize(ROCK_NAME = ROCK_NAME[1], ROCK_TYPE = ROCK_TYPE[1], AQ_NAME = AQ_NAME[1])
+  
+  pa <- st_cast(pa, "MULTIPOLYGON")
+  
+  pa$uri <- paste0(pid_base, pa$AQ_CODE)
+  
+  pa <- dplyr::filter(pa, !is.na(pa$AQ_CODE)) %>%
+    select(uri, AQ_CODE, AQ_NAME, ROCK_NAME, ROCK_TYPE)
+  
+  unlink(out, force = TRUE)
+  
+  sf::write_sf(pa, out)
+  
+  pa$uri <- paste0(pid_base, pa$paFR_CD)
+  
+  out <- dplyr::tibble(id = pa$uri,
+                       target = paste0(landing_base,
+                                       pa$AQ_CODE),
+                       creator = "dblodgett@usgs.gov",
+                       description = "Principle Aquifer Reference",
+                       c1_type = "QueryString",
+                       c1_match = "f=.*",
+                       c1_value = paste0(landing_base,
+                                         pa$pa$AQ_CODE,
+                                         "?f=${C:f:1}"))
+  
+  readr::write_csv(out, path = out_csv)
+}
+
+write_shr <- function(shr, pid_base, landing_base, out, out_csv) {
+  shr <- rmapshaper::ms_simplify(shr)
+  
+  id <- as.character(digest::digest2int(shr$SHR))
+  id <- substr(id, nchar(id) - 5, nchar(id))
+  
+  shr$uri <- paste0(pid_base, id)
+  
+  shr <- select(shr, uri, SHR, PrimaryLit, Type, GeologicPr, Subprovinc)
+  
+  unlink(out, force = TRUE)
+  
+  sf::write_sf(shr, out)
+  
+  out <- dplyr::tibble(id = shr$uri,
+                       target = paste0(landing_base, id),
+                       creator = "dblodgett@usgs.gov",
+                       description = "Secondary Hydrogeologic Region Reference",
+                       c1_type = "QueryString",
+                       c1_match = "f=.*",
+                       c1_value = paste0(landing_base,
+                                         id,
+                                         "?f=${C:f:1}"))
+  
+  readr::write_csv(out, path = out_csv)
+}
+
 make_nwis_aq <- function(nwis_well_sites, aq_names, 
                          area_filter = units::set_units(1e12, "m^2"),
                          min_wells = 100) {
