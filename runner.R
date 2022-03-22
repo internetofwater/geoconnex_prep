@@ -4,6 +4,7 @@ library(rmapshaper)
 library(readr)
 library(dplyr)
 library(drake)
+library(rvest)
 
 sf::sf_use_s2(FALSE)
 
@@ -79,6 +80,7 @@ plan <- drake_plan(nwis_sites = get_nwis_sites(),
                                           area_filter = units::set_units(1e12, "m^2"),
                                           min_wells = 100),
                    nat_aq = sf::read_sf(ngwmn_wfs_call),
+                   nat_aq_links = get_national_aquifer_html(),
                    nat_aq_out = write_nat_aq(nat_aq,
                                              pid_base = "https://geoconnex.us/ref/nat_aq/",
                                              landing_base = "https://info.geoconnex.us/collections/nat_aq/items/",
@@ -94,7 +96,7 @@ plan <- drake_plan(nwis_sites = get_nwis_sites(),
                    shr_gdb = get_secondary_gydrogeologic_regions(),
                    secondary_hydrogeologic_regions = sf::read_sf(shr_gdb, "Secondary_Hydrogeologic_Regions"),
                    shr_out = write_shr(secondary_hydrogeologic_regions,
-                                       pid_base = "https://geoconnex.us/ref/sec_hydro_reg/",
+                                       pid_base = "https://geoconnex.us/ref/sec_hydrg_reg/",
                                        landing_base = "https://info.geoconnex.us/collections/sec_hydro_reg/items/",
                                        out = file_out("out/shr.gpkg"),
                                        out_csv = file_out("out/shr.csv")),
