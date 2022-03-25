@@ -51,7 +51,7 @@ get_hu <- function(wbd_gdb, hu_layer, id_attribute, pid_base,
   hu
 }
 
-write_nat_aq <- function(nat_aq, pid_base, landing_base, out, out_csv) {
+write_nat_aq <- function(nat_aq, pid_base, landing_base, pa_base, out, out_csv) {
   nat_aq <- rmapshaper::ms_simplify(nat_aq)
   
   nat_aq$LINK[nat_aq$AQ_CODE == 610] <- "https://water.usgs.gov/ogw/aquiferbasics/pacnorbr.html"
@@ -64,7 +64,8 @@ write_nat_aq <- function(nat_aq, pid_base, landing_base, out, out_csv) {
   nat_aq$uri <- paste0(pid_base, nat_aq$NAT_AQFR_CD)
   
   nat_aq <- dplyr::filter(nat_aq, !is.na(nat_aq$NAT_AQFR_CD)) %>%
-    select(uri, LINK, NAT_AQFR_CD, AQ_NAME, AQ_CODE, ROCK_NAME, ROCK_TYPE)
+    dplyr::select(uri, LINK, NAT_AQFR_CD, AQ_NAME, AQ_CODE, ROCK_NAME, ROCK_TYPE) %>%
+    dplyr::mutate(sameas = paste0(pa_base, AQ_CODE))
   
   unlink(out, force = TRUE)
   
@@ -84,20 +85,28 @@ write_nat_aq <- function(nat_aq, pid_base, landing_base, out, out_csv) {
                                          "?f=${C:f:1}"))
   
   readr::write_csv(out, path = out_csv)
+  
+  nat_aq
 }
 
-write_pa <- function(pa, pid_base, landing_base, out, out_csv) {
+write_pa <- function(pa, pid_base, landing_base, nat_aq, out, out_csv) {
   pa <- rmapshaper::ms_simplify(pa)
   
   pa <- dplyr::group_by(pa, AQ_CODE) %>%
-    dplyr::summarize(ROCK_NAME = ROCK_NAME[1], ROCK_TYPE = ROCK_TYPE[1], AQ_NAME = AQ_NAME[1])
+    dplyr::summarize(ROCK_NAME = ROCK_NAME[1], ROCK_TYPE = ROCK_TYPE[1], AQ_NAME = AQ_NAME[1]) %>%
+    dplyr::left_join(
+      dplyr::select(
+        sf::st_drop_geometry(nat_aq),
+        AQ_CODE, sameas = uri
+      ), by = "AQ_CODE"
+    )
   
   pa <- st_cast(pa, "MULTIPOLYGON")
   
   pa$uri <- paste0(pid_base, pa$AQ_CODE)
   
   pa <- dplyr::filter(pa, !is.na(pa$AQ_CODE)) %>%
-    select(uri, AQ_CODE, AQ_NAME, ROCK_NAME, ROCK_TYPE)
+    select(uri, sameas, AQ_CODE, AQ_NAME, ROCK_NAME, ROCK_TYPE)
   
   unlink(out, force = TRUE)
   
@@ -113,7 +122,7 @@ write_pa <- function(pa, pid_base, landing_base, out, out_csv) {
                        c1_type = "QueryString",
                        c1_match = "f=.*",
                        c1_value = paste0(landing_base,
-                                         pa$pa$AQ_CODE,
+                                         pa$AQ_CODE,
                                          "?f=${C:f:1}"))
   
   readr::write_csv(out, path = out_csv)
@@ -122,10 +131,10 @@ write_pa <- function(pa, pid_base, landing_base, out, out_csv) {
 write_shr <- function(shr, pid_base, landing_base, out, out_csv) {
   shr <- rmapshaper::ms_simplify(shr)
   
-  id <- as.character(digest::digest2int(shr$SHR))
-  id <- substr(id, nchar(id) - 5, nchar(id))
+  shr_id <- as.character(digest::digest2int(shr$SHR))
+  shr_id <- substr(shr_id, nchar(shr_id) - 5, nchar(shr_id))
   
-  shr$uri <- paste0(pid_base, id)
+  shr$uri <- paste0(pid_base, shr_id)
   
   shr <- select(shr, uri, SHR, PrimaryLit, Type, GeologicPr, Subprovinc)
   
@@ -140,7 +149,7 @@ write_shr <- function(shr, pid_base, landing_base, out, out_csv) {
                        c1_type = "QueryString",
                        c1_match = "f=.*",
                        c1_value = paste0(landing_base,
-                                         id,
+                                         shr_id,
                                          "?f=${C:f:1}"))
   
   readr::write_csv(out, path = out_csv)
