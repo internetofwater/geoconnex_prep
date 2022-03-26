@@ -148,30 +148,38 @@ get_secondary_gydrogeologic_regions <- function() {
 }
 
 # caching this file in case the html goes away
-get_national_aquifer_html <- function(cache_file = "out/nat_aq_links.csv") {
+get_national_aquifer_html <- function(cache_file = "data/nat_aq_links.html") {
   
   if(!file.exists(cache_file)) {
     page <- rvest::read_html("https://water.usgs.gov/ogw/NatlAqCode-reflist.html")
-    
-    df <- html_table(page)[[2]]
-    
-    rows<-html_nodes(page, "table") %>% 
-      html_nodes("tr") 
-    
-    rows <- rows[3: length(rows)]
-    
-    urls <- bind_rows(lapply(rows, function(x) {
-      x <- html_nodes(x, "td")
-      setNames(as.data.frame(lapply(x, function(y) {
-        html_attr(html_node(y, "a"), "href")
-      })), paste(names(df), "href"))
-    }))
-    
-    df <- bind_cols(df, urls)
-    
-    readr::write_csv(df, cache_file)
-  } 
+    xml2::write_html(page, cache_file)
+  } else {
+    page <- rvest::read_html(cache_file)
+  }
   
-  readr::read_csv(cache_file) 
- 
+  df <- html_table(page)[[2]]
+  
+  rows<-html_nodes(page, "table") %>% 
+    html_nodes("tr") 
+  
+  rows <- rows[3: length(rows)]
+  
+  urls <- bind_rows(lapply(rows, function(x) {
+    x <- html_nodes(x, "td")
+    row <- lapply(x, function(y) {
+      html_attr(html_nodes(y, "a"), "href")
+    })
+    
+    row[lengths(row) == 0] <- ""
+    
+    out <- as.data.frame(row[1:6])
+    out[,7] <- list(row[7])
+    
+    names(out) <- paste(names(df), "href")
+    
+    out
+  }))
+  
+  df <- bind_cols(df, urls)
+  
 }

@@ -51,7 +51,7 @@ get_hu <- function(wbd_gdb, hu_layer, id_attribute, pid_base,
   hu
 }
 
-write_nat_aq <- function(nat_aq, pid_base, landing_base, pa_base, out, out_csv) {
+write_nat_aq <- function(nat_aq, pid_base, landing_base, pa_base, links, out, out_csv) {
   nat_aq <- rmapshaper::ms_simplify(nat_aq)
   
   nat_aq$LINK[nat_aq$AQ_CODE == 610] <- "https://water.usgs.gov/ogw/aquiferbasics/pacnorbr.html"
@@ -66,6 +66,34 @@ write_nat_aq <- function(nat_aq, pid_base, landing_base, pa_base, out, out_csv) 
   nat_aq <- dplyr::filter(nat_aq, !is.na(nat_aq$NAT_AQFR_CD)) %>%
     dplyr::select(uri, LINK, NAT_AQFR_CD, AQ_NAME, AQ_CODE, ROCK_NAME, ROCK_TYPE) %>%
     dplyr::mutate(sameas = paste0(pa_base, AQ_CODE))
+  
+  nat_aq <- left_join(
+    nat_aq,
+    select(
+      links, Code, valid_states = `Valid States`
+    ), by = c("NAT_AQFR_CD" = "Code")
+  )
+  
+  gis_metadata = links$`Archived GIS coverage of outcrop or extent href`
+  
+  nat_aq$gis_data2 <- nat_aq$gis_metadata2 <- nat_aq$gis_data <- nat_aq$gis_metadata <- ''
+  
+  for(i in seq_len(nrow(nat_aq))) {
+    l <- paste0("https://water.usgs.gov/ogw/", gis_metadata[[i]])
+    ll <- length(l)
+    if(ll > 0) {
+      nat_aq$gis_metadata <- l[1]
+    }
+    if(ll > 1) {
+      nat_aq$gis_data <- l[2]
+    } 
+    if(ll > 2) {
+      nat_aq$gis_metadat2 <- l[3]
+    } 
+    if(ll > 3) {
+      nat_aq$gis_metadata3 <- l[4]
+    }
+  }
   
   unlink(out, force = TRUE)
   
@@ -112,7 +140,7 @@ write_pa <- function(pa, pid_base, landing_base, nat_aq, out, out_csv) {
   
   sf::write_sf(pa, out)
   
-  pa$uri <- paste0(pid_base, pa$paFR_CD)
+  pa$uri <- paste0(pid_base, pa$AQ_CODE)
   
   out <- dplyr::tibble(id = pa$uri,
                        target = paste0(landing_base,
@@ -131,12 +159,13 @@ write_pa <- function(pa, pid_base, landing_base, nat_aq, out, out_csv) {
 write_shr <- function(shr, pid_base, landing_base, out, out_csv) {
   shr <- rmapshaper::ms_simplify(shr)
   
-  shr_id <- as.character(digest::digest2int(shr$SHR))
+  shr_id <- as.character(digest::digest2int(shr$SHR, 0L))
   shr_id <- substr(shr_id, nchar(shr_id) - 5, nchar(shr_id))
   
   shr$uri <- paste0(pid_base, shr_id)
+  shr$id <- shr_id
   
-  shr <- select(shr, uri, SHR, PrimaryLit, Type, GeologicPr, Subprovinc)
+  shr <- select(shr, uri, id, SHR, PrimaryLit, Type, GeologicPr, Subprovinc)
   
   unlink(out, force = TRUE)
   
