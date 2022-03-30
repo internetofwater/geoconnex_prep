@@ -6,7 +6,12 @@ get_hu <- function(wbd_gdb, hu_layer, id_attribute, pid_base,
   
   hu <- sf::read_sf(wbd_gdb, hu_layer)
   
-  hu <- rmapshaper::ms_simplify(hu, sys = TRUE)
+  hu <- sf::st_make_valid(hu)
+  
+  check <- sf::sf_use_s2()
+  sf_use_s2(FALSE)
+  hu <- sf::st_simplify(hu, dTolerance = 0.005)
+  sf::sf_use_s2(check)
   
   names(hu)[names(hu) == id_attribute] <- "temp_id"
   
