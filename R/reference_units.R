@@ -161,14 +161,14 @@ write_pa <- function(pa, pid_base, landing_base, nat_aq, out, out_csv) {
   readr::write_csv(out, path = out_csv)
 }
 
-write_shr <- function(shr, pid_base, landing_base, out, out_csv) {
+write_shr <- function(shr, pid_base, landing_base, shr_ids, out, out_csv) {
   shr <- rmapshaper::ms_simplify(shr)
   
-  shr_id <- as.character(digest::digest2int(shr$SHR, 0L))
-  shr_id <- substr(shr_id, nchar(shr_id) - 5, nchar(shr_id))
+  shr <- left_join(shr, shr_ids, 
+                   by = c("SHR" = "SHR_Name"))
   
-  shr$uri <- paste0(pid_base, shr_id)
-  shr$id <- shr_id
+  shr$uri <- paste0(pid_base, shr$SHR_num)
+  shr$id <- shr$SHR_num
   
   shr <- select(shr, uri, id, SHR, PrimaryLit, Type, GeologicPr, Subprovinc)
   
@@ -177,13 +177,13 @@ write_shr <- function(shr, pid_base, landing_base, out, out_csv) {
   sf::write_sf(shr, out)
   
   out <- dplyr::tibble(id = shr$uri,
-                       target = paste0(landing_base, id),
+                       target = paste0(landing_base, shr$id),
                        creator = "dblodgett@usgs.gov",
                        description = "Secondary Hydrogeologic Region Reference",
                        c1_type = "QueryString",
                        c1_match = "f=.*",
                        c1_value = paste0(landing_base,
-                                         shr_id,
+                                         shr$id,
                                          "?f=${C:f:1}"))
   
   readr::write_csv(out, path = out_csv)
