@@ -93,10 +93,10 @@ write_nat_aq <- function(nat_aq, pid_base, landing_base, pa_base, links, out, ou
       nat_aq$gis_data <- l[2]
     } 
     if(ll > 2) {
-      nat_aq$gis_metadat2 <- l[3]
+      nat_aq$gis_metadata2 <- l[3]
     } 
     if(ll > 3) {
-      nat_aq$gis_metadata3 <- l[4]
+      nat_aq$gis_data2 <- l[4]
     }
   }
   
@@ -167,10 +167,12 @@ write_shr <- function(shr, pid_base, landing_base, shr_ids, out, out_csv) {
   shr <- left_join(shr, shr_ids, 
                    by = c("SHR" = "SHR_Name"))
   
-  shr$uri <- paste0(pid_base, shr$SHR_num)
-  shr$id <- shr$SHR_num
+  shr$uri <- paste0(pid_base, shr$SHR_CODE)
+  shr$id <- shr$SHR_CODE
   
   shr <- select(shr, uri, id, SHR, PrimaryLit, Type, GeologicPr, Subprovinc)
+  
+  shr <- sf::st_transform(shr, 4326)
   
   unlink(out, force = TRUE)
   
