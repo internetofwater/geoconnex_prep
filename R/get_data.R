@@ -120,7 +120,7 @@ download_gnis <- function() {
   
 }
 
-get_principle_aquifers <- function() {
+get_principal_aquifers <- function() {
   aq_zip <- "data/g_aquifr.tar.gz"
   
   if(!file.exists(aq_zip)) {
