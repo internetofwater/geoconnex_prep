@@ -94,17 +94,6 @@ get_v2_flowlines <- function() {
               "NHDFlowline_Network")
 }
 
-get_mainstems_db <- function() {
-  ms_gpkg <- "data/mainstems/mainstems_summary.gpkg"
-  
-  if(!file.exists(ms_gpkg)) {
-    dir.create(dirname(ms_gpkg), recursive = TRUE, showWarnings = FALSE)
-    f <- sbtools::item_file_download("60cb5edfd34e86b938a373f4", names = "mainstems_summary.gpkg", destinations = ms_gpkg)
-  }
-  
-  ms_gpkg
-}
-
 download_gnis <- function() {
   
   gnis_zip <- "data/gnis/NationalFile.zip"
