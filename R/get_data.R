@@ -94,21 +94,6 @@ get_v2_flowlines <- function() {
               "NHDFlowline_Network")
 }
 
-download_gnis <- function() {
-  
-  gnis_zip <- "data/gnis/NationalFile.zip"
-  
-  if(!file.exists(gnis_zip)) {
-    dir.create(dirname(gnis_zip), recursive = TRUE, showWarnings = FALSE)
-    f <- download.file("https://geonames.usgs.gov/docs/stategaz/NationalFile.zip", gnis_zip, mode = "wb")
-    
-    zip::unzip(gnis_zip, exdir = dirname(gnis_zip))
-  }
-  
-  "data/gnis/NationalFile_20210825.txt"
-  
-}
-
 get_principal_aquifers <- function() {
   aq_zip <- "data/g_aquifr.tar.gz"
   
