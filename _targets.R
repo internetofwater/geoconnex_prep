@@ -35,16 +35,16 @@ list(
   # tar_target(nwis_sites, get_nwis_sites()),
   # tar_target(nwis_well_sites, get_nwis_well_sites(nwis_sites)),
   # tar_target(nwis_wells, get_nwis_wells(nwis_well_sites)),
-  
-  tar_target(
-    nwis_wells_out,
-    {
-      sf::write_sf(nwis_wells, "out/nwis_wells.geojson")
-      "out/nwis_wells.geojson"
-    },
-    format = "file"
-  ),
-  
+  # 
+  # tar_target(
+  #   nwis_wells_out,
+  #   {
+  #     sf::write_sf(nwis_wells, "out/nwis_wells.geojson")
+  #     "out/nwis_wells.geojson"
+  #   },
+  #   format = "file"
+  # ),
+  # 
   # POIs / NHDPlus v2 ------------------------------------------------------
   tar_target(POIs, get_gf_11_poi()),
   tar_target(v1_v2, get_nhdplus_crosswalk()),
@@ -53,15 +53,15 @@ list(
   
   tar_target(gf11_pois, index_pois(POIs, v1_v2, flines = nhdplusv2_flines)),
   
-  # HUC redirects (CSV file output) ---------------------------------------
-  tar_target(
-    huc,
-    {
-      make_nwis_huc_redirects(nwis_sites, "out/hydrologic-unit.csv")
-      "out/hydrologic-unit.csv"
-    },
-    format = "file"
-  ),
+  # # HUC redirects (CSV file output) ---------------------------------------
+  # tar_target(
+  #   huc,
+  #   {
+  #     make_nwis_huc_redirects(nwis_sites, "out/hydrologic-unit.csv")
+  #     "out/hydrologic-unit.csv"
+  #   },
+  #   format = "file"
+  # ),
   
   # WBD geodatabase (treated as file dependency) --------------------------
   tar_target(wbd_gdb, get_wbd_gdb("data/wbd/"), format = "file"),
@@ -160,7 +160,10 @@ list(
       c("out/hu10.gpkg", "out/hu10.csv")
     },
     format = "file"
-  )
+  ),
+  
+  tar_target(hu12_file, get_reference_huc12(), format = "file"),
+  tar_target(hu12, make_reference_huc12(hu12_file, wbd_gdb), format = "file")
   
   # # National aquifers (NGWMN WFS + writers) -------------------------------
   # tar_target(

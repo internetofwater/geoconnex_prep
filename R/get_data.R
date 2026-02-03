@@ -86,7 +86,7 @@ get_nhdplus_crosswalk <- function() {
 }
 
 get_v2_flowlines <- function() {
-  nhd_data <- "data/nhdp/NHDPlusNationalData/NHDPlusV21_National_Seamless.gdb"
+  nhd_data <- "data/nhdp/NHDPlusNationalData/NHDPlusV21_National_Seamless_Flattened_Lower48.gdb"
   if(!dir.exists(nhd_data)) {
     stop(paste("expect nhdp data available at \n", nhd_data))
   }
@@ -156,4 +156,18 @@ get_national_aquifer_html <- function(cache_file = "data/nat_aq_links.html") {
   
   df <- bind_cols(df, urls)
   
+}
+
+get_reference_hu12 <- function() {
+  wbd_gpkg <- "data/reference_huc12.gpkg"
+  
+  
+  if(!file.exists(shr_zip)) {
+    
+    f <- sbtools::item_file_download("682cd1b0d4be021a0d6b77b7", 
+                                     names = basename(wbd_gpkg), 
+                                     destinations = wbd_gpkg)
+  }
+  
+  wbd_gpkg
 }

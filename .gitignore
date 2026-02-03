@@ -8,3 +8,4 @@ data/*
 *.geojson
 *.DS_Store
 out/*
+_targets

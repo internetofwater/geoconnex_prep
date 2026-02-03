@@ -270,3 +270,39 @@ make_nwis_aq <- function(nwis_well_sites, aq_names,
     filter(area < area_filter)
   
 }
+
+make_reference_huc12 <- function(hu12_file, wbd_gdb) {
+  
+  hu12 <- sf::read_sf(hu12_file)
+  
+  hu12$uri <- paste0("https://geoconnex.us/ref/huc12/", hu12$huc12)
+  
+  hu12 <- dplyr::mutate(
+    hu12, 
+    nhdpv2 = ifelse(nhdpv2, paste0("https://geoconnex.us/nhdplusv2/huc12/", huc12), ""),
+    nhdphr = ifelse(nhdphr, paste0("https://geoconnex.us/nhdplushr/huc12/", huc12), ""),
+    niwaa = ifelse(niwaa, paste0("https://geoconnex.us/usgs/huc12-2020/", huc12), ""),
+    final = ifelse(final, paste0("https://geoconnex.us/usgs/huc12-2025/", huc12), ""))
+  
+  hu12 <- dplyr::mutate(
+    hu12, 
+    latest = dplyr::case_when(grepl("nhdpv2", latest) ~ nhdpv2,
+                              grepl("nhdphr", latest) ~ nhdphr,
+                              grepl("niwaa", latest) ~ niwaa,
+                              grepl("final", latest) ~ final,
+                              .default = "")
+  )
+  
+  wbd <- sf::read_sf(wbd_gdb, "WBDHU12")
+  
+  wbd <- sf::st_drop_geometry(wbd)
+  
+  wbd <- dplyr::select(wbd, huc12 = HUC12, tohuc = TOHUC, name = NAME, areasqkm = AREASQKM, noncontributingareasqkm = NONCONTRIBUTINGAREASQKM)
+  
+  hu12 <- dplyr::left_join(hu12, wbd, by = "huc12")
+
+  hu12 <- dplyr::select(hu12, uri, name, huc12, tohuc, latest, areasqkm, noncontributingareasqkm, dplyr::everything())
+    
+  sf::write_sf(hu12, "out/reference_huc12.gpkg")
+}
+
